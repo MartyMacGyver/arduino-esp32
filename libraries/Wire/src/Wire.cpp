@@ -95,6 +95,11 @@ void TwoWire::setClock(uint32_t frequency)
     i2cSetFrequency(i2c, frequency);
 }
 
+uint32_t TwoWire::getClock()
+{
+    return i2cGetFrequency(i2c);
+}
+
 size_t TwoWire::requestFrom(uint8_t address, size_t size, bool sendStop)
 {
     if(size > I2C_BUFFER_LENGTH) {

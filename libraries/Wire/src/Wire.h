@@ -54,6 +54,7 @@ public:
     TwoWire(uint8_t bus_num);
     void begin(int sda=-1, int scl=-1, uint32_t frequency=100000);
     void setClock(uint32_t);
+    uint32_t getClock();
     void beginTransmission(uint8_t);
     void beginTransmission(int);
     uint8_t endTransmission(void);
