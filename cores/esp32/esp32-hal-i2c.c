@@ -337,36 +337,113 @@ i2c_err_t i2cRead(i2c_t * i2c, uint16_t address, bool addr_10bit, uint8_t * data
 
 i2c_err_t i2cSetFrequency(i2c_t * i2c, uint32_t clk_speed)
 {
+    i2c_err_t error_type = I2C_ERROR_DEV;
+
     if(i2c == NULL){
-        return I2C_ERROR_DEV;
+        return error_type;
     }
 
-    uint32_t period = (APB_CLK_FREQ/clk_speed) / 2;
-    uint32_t halfPeriod = period/2;
-    uint32_t quarterPeriod = period/4;
+    // if APB_CLK_FREQ == 80MHz, period = 12.5ns = 12500 ps = 80/us
+    uint32_t APB_period_in_ps = 1000000000 / (APB_CLK_FREQ / 1000); //12500
+    uint32_t clk_period_in_ps = 1000000000 / (clk_speed    / 1000); //2000000 // works down to 1 khz
+
+    // APB Clock periods for a full I2C clock cycle
+    uint32_t fullPeriod_in_APB_clocks = (APB_CLK_FREQ/clk_speed); //160
 
     I2C_MUTEX_LOCK();
-    //the clock num during SCL is low level
-    i2c->dev->scl_low_period.period = period;
-    //the clock num during SCL is high level
-    i2c->dev->scl_high_period.period = period;
 
-    //the clock num between the negedge of SDA and negedge of SCL for start mark
-    i2c->dev->scl_start_hold.time = halfPeriod;
-    //the clock num between the posedge of SCL and the negedge of SDA for restart mark
-    i2c->dev->scl_rstart_setup.time = halfPeriod;
+    if (clk_speed <= 100000)
+    {
+        // Standard-mode, >= 10000ns/cycle, l/H = 2 (typ.)
+        uint32_t scl_min_low_in_ns  = 4700;
+        uint32_t scl_min_high_in_ns = 4000;
+        uint32_t scl_min_pad_in_ns  =    0;
 
-    //the clock num after the STOP bit's posedge
-    i2c->dev->scl_stop_hold.time = halfPeriod;
-    //the clock num between the posedge of SCL and the posedge of SDA
-    i2c->dev->scl_stop_setup.time = halfPeriod;
+        uint32_t scl_high_period_in_ps = (scl_min_high_in_ns + scl_min_pad_in_ns) * 1000;
+        uint32_t scl_low_period_in_ps  = (clk_period_in_ps * 1) - scl_high_period_in_ps;
 
-    //the clock num I2C used to hold the data after the negedge of SCL.
-    i2c->dev->sda_hold.time = quarterPeriod;
-    //the clock num I2C used to sample data on SDA after the posedge of SCL
-    i2c->dev->sda_sample.time = quarterPeriod;
+        //APB Clock periods for SCL high
+        i2c->dev->scl_high_period.period = scl_high_period_in_ps / APB_period_in_ps;
+        //APB Clock periods for SCL low
+        i2c->dev->scl_low_period.period = scl_low_period_in_ps / APB_period_in_ps;
+        //APB Clock periods between negedge of SDA and negedge of SCL for start mark
+        i2c->dev->scl_start_hold.time = fullPeriod_in_APB_clocks/4;
+        //APB Clock periods between the posedge of SCL and the negedge of SDA for restart mark
+        i2c->dev->scl_rstart_setup.time = fullPeriod_in_APB_clocks/4;
+        //APB Clock periods after the STOP bit's posedge
+        i2c->dev->scl_stop_hold.time = fullPeriod_in_APB_clocks/4;
+        //APB Clock periods between the posedge of SCL and the posedge of SDA
+        i2c->dev->scl_stop_setup.time = fullPeriod_in_APB_clocks/4;
+        //APB Clock periods to hold the data after the negedge of SCL.
+        i2c->dev->sda_hold.time = fullPeriod_in_APB_clocks/8;
+        //APB Clock periods to sample data on SDA after the posedge of SCL
+        i2c->dev->sda_sample.time = fullPeriod_in_APB_clocks/8;
+
+        error_type = I2C_ERROR_OK;
+    }
+    else if (clk_speed <= 400000)
+    {
+        // Fast-mode, >= 2500ns/cycle, l/H = 16/9 (typ.)
+        uint32_t scl_min_low_in_ns  = 1300;
+        uint32_t scl_min_high_in_ns =  600;
+        uint32_t scl_min_pad_in_ns  =    0;
+
+        uint32_t scl_high_period_in_ps = (scl_min_high_in_ns + scl_min_pad_in_ns) * 1000; // 600000
+        uint32_t scl_low_period_in_ps  = (clk_period_in_ps - scl_high_period_in_ps); // 1700000
+
+        //APB Clock periods for SCL high
+        i2c->dev->scl_high_period.period = scl_high_period_in_ps / APB_period_in_ps; // 3
+        //APB Clock periods for SCL low
+        i2c->dev->scl_low_period.period = scl_low_period_in_ps / APB_period_in_ps; // 156
+        //APB Clock periods between negedge of SDA and negedge of SCL for start mark
+        i2c->dev->scl_start_hold.time = fullPeriod_in_APB_clocks/4;
+        //APB Clock periods between the posedge of SCL and the negedge of SDA for restart mark
+        i2c->dev->scl_rstart_setup.time = fullPeriod_in_APB_clocks/4;
+        //APB Clock periods after the STOP bit's posedge
+        i2c->dev->scl_stop_hold.time = fullPeriod_in_APB_clocks/4;
+        //APB Clock periods between the posedge of SCL and the posedge of SDA
+        i2c->dev->scl_stop_setup.time = fullPeriod_in_APB_clocks/4;
+        //APB Clock periods to hold the data after the negedge of SCL.
+        i2c->dev->sda_hold.time = fullPeriod_in_APB_clocks/8;
+        //APB Clock periods to sample data on SDA after the posedge of SCL
+        i2c->dev->sda_sample.time = fullPeriod_in_APB_clocks/8;
+
+        error_type = I2C_ERROR_OK;
+    }
+    else if (clk_speed <= 1000000)
+    {
+        // Fast-mode Plus, >= 1000ns/cycle, l/H = 1 (typ.)???
+        uint32_t scl_min_low_in_ns  =  500;
+        uint32_t scl_min_high_in_ns =  260;
+        uint32_t scl_min_pad_in_ns  =    0;
+
+        uint32_t scl_high_period_in_ps = (scl_min_high_in_ns + scl_min_pad_in_ns) * 1000;
+        uint32_t scl_low_period_in_ps  = (clk_period_in_ps * 1) - scl_high_period_in_ps;
+
+        //APB Clock periods for SCL high
+        i2c->dev->scl_high_period.period = scl_high_period_in_ps / APB_period_in_ps;
+        //APB Clock periods for SCL low
+        i2c->dev->scl_low_period.period = scl_low_period_in_ps / APB_period_in_ps;
+        //APB Clock periods between negedge of SDA and negedge of SCL for start mark
+        i2c->dev->scl_start_hold.time = fullPeriod_in_APB_clocks/4;
+        //APB Clock periods between the posedge of SCL and the negedge of SDA for restart mark
+        i2c->dev->scl_rstart_setup.time = fullPeriod_in_APB_clocks/4;
+        //APB Clock periods after the STOP bit's posedge
+        i2c->dev->scl_stop_hold.time = fullPeriod_in_APB_clocks/4;
+        //APB Clock periods between the posedge of SCL and the posedge of SDA
+        i2c->dev->scl_stop_setup.time = fullPeriod_in_APB_clocks/4;
+        //APB Clock periods to hold the data after the negedge of SCL.
+        i2c->dev->sda_hold.time = fullPeriod_in_APB_clocks/8;
+        //APB Clock periods to sample data on SDA after the posedge of SCL
+        i2c->dev->sda_sample.time = fullPeriod_in_APB_clocks/8;
+
+        error_type = I2C_ERROR_OK;
+    }
+    else {
+        error_type = I2C_ERROR_DEV;       
+    }
     I2C_MUTEX_UNLOCK();
-    return I2C_ERROR_OK;
+    return error_type;
 }
 
 uint32_t i2cGetFrequency(i2c_t * i2c)
