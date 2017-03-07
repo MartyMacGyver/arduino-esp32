@@ -357,27 +357,34 @@ i2c_err_t i2cSetFrequency(i2c_t * i2c, uint32_t clk_speed)
         // Standard-mode, >= 10000ns/cycle, l/H = 2 (typ.)
         uint32_t scl_min_low_in_ns  = 4700;
         uint32_t scl_min_high_in_ns = 4000;
-        uint32_t scl_min_pad_in_ns  =    0;
+        int32_t  scl_pad_low_in_ns  =    0;
+        int32_t  scl_pad_high_in_ns =    0;
 
-        uint32_t scl_high_period_in_ps = (scl_min_high_in_ns + scl_min_pad_in_ns) * 1000;
-        uint32_t scl_low_period_in_ps  = (clk_period_in_ps * 1) - scl_high_period_in_ps;
+        uint32_t scl_high_period_in_ps = (scl_min_high_in_ns + scl_pad_high_in_ns) * 1000;
+        uint32_t scl_low_period_in_ps  = clk_period_in_ps - scl_high_period_in_ps + scl_pad_low_in_ns * 1000;
 
         //APB Clock periods for SCL high
         i2c->dev->scl_high_period.period = scl_high_period_in_ps / APB_period_in_ps;
         //APB Clock periods for SCL low
         i2c->dev->scl_low_period.period = scl_low_period_in_ps / APB_period_in_ps;
+
         //APB Clock periods between negedge of SDA and negedge of SCL for start mark
         i2c->dev->scl_start_hold.time = fullPeriod_in_APB_clocks/4;
         //APB Clock periods between the posedge of SCL and the negedge of SDA for restart mark
         i2c->dev->scl_rstart_setup.time = fullPeriod_in_APB_clocks/4;
+
         //APB Clock periods after the STOP bit's posedge
         i2c->dev->scl_stop_hold.time = fullPeriod_in_APB_clocks/4;
         //APB Clock periods between the posedge of SCL and the posedge of SDA
         i2c->dev->scl_stop_setup.time = fullPeriod_in_APB_clocks/4;
+
         //APB Clock periods to hold the data after the negedge of SCL.
         i2c->dev->sda_hold.time = fullPeriod_in_APB_clocks/8;
         //APB Clock periods to sample data on SDA after the posedge of SCL
         i2c->dev->sda_sample.time = fullPeriod_in_APB_clocks/8;
+
+        //The max clock number of receiving  a data
+        i2c->dev->timeout.tout = 200000;//clocks max=1048575
 
         error_type = I2C_ERROR_OK;
     }
@@ -386,27 +393,34 @@ i2c_err_t i2cSetFrequency(i2c_t * i2c, uint32_t clk_speed)
         // Fast-mode, >= 2500ns/cycle, l/H = 16/9 (typ.)
         uint32_t scl_min_low_in_ns  = 1300;
         uint32_t scl_min_high_in_ns =  600;
-        uint32_t scl_min_pad_in_ns  =    0;
+        int32_t  scl_pad_low_in_ns  =    0;
+        int32_t  scl_pad_high_in_ns =    0;
 
-        uint32_t scl_high_period_in_ps = (scl_min_high_in_ns + scl_min_pad_in_ns) * 1000; // 600000
-        uint32_t scl_low_period_in_ps  = (clk_period_in_ps - scl_high_period_in_ps); // 1700000
+        uint32_t scl_high_period_in_ps = (scl_min_high_in_ns + scl_pad_high_in_ns) * 1000;
+        uint32_t scl_low_period_in_ps  = clk_period_in_ps - scl_high_period_in_ps + scl_pad_low_in_ns * 1000;
 
         //APB Clock periods for SCL high
         i2c->dev->scl_high_period.period = scl_high_period_in_ps / APB_period_in_ps; // 3
         //APB Clock periods for SCL low
         i2c->dev->scl_low_period.period = scl_low_period_in_ps / APB_period_in_ps; // 156
+
         //APB Clock periods between negedge of SDA and negedge of SCL for start mark
         i2c->dev->scl_start_hold.time = fullPeriod_in_APB_clocks/4;
         //APB Clock periods between the posedge of SCL and the negedge of SDA for restart mark
         i2c->dev->scl_rstart_setup.time = fullPeriod_in_APB_clocks/4;
+
         //APB Clock periods after the STOP bit's posedge
         i2c->dev->scl_stop_hold.time = fullPeriod_in_APB_clocks/4;
         //APB Clock periods between the posedge of SCL and the posedge of SDA
         i2c->dev->scl_stop_setup.time = fullPeriod_in_APB_clocks/4;
+
         //APB Clock periods to hold the data after the negedge of SCL.
         i2c->dev->sda_hold.time = fullPeriod_in_APB_clocks/8;
         //APB Clock periods to sample data on SDA after the posedge of SCL
         i2c->dev->sda_sample.time = fullPeriod_in_APB_clocks/8;
+
+        //The max clock number of receiving  a data
+        i2c->dev->timeout.tout = 200000;//clocks max=1048575
 
         error_type = I2C_ERROR_OK;
     }
@@ -415,27 +429,34 @@ i2c_err_t i2cSetFrequency(i2c_t * i2c, uint32_t clk_speed)
         // Fast-mode Plus, >= 1000ns/cycle, l/H = 1 (typ.)???
         uint32_t scl_min_low_in_ns  =  500;
         uint32_t scl_min_high_in_ns =  260;
-        uint32_t scl_min_pad_in_ns  =    0;
+        int32_t  scl_pad_low_in_ns  =    0;
+        int32_t  scl_pad_high_in_ns =    0;
 
-        uint32_t scl_high_period_in_ps = (scl_min_high_in_ns + scl_min_pad_in_ns) * 1000;
-        uint32_t scl_low_period_in_ps  = (clk_period_in_ps * 1) - scl_high_period_in_ps;
+        uint32_t scl_high_period_in_ps = (scl_min_high_in_ns + scl_pad_high_in_ns) * 1000;
+        uint32_t scl_low_period_in_ps  = clk_period_in_ps - scl_high_period_in_ps + scl_pad_low_in_ns * 1000;
 
         //APB Clock periods for SCL high
         i2c->dev->scl_high_period.period = scl_high_period_in_ps / APB_period_in_ps;
         //APB Clock periods for SCL low
         i2c->dev->scl_low_period.period = scl_low_period_in_ps / APB_period_in_ps;
+
         //APB Clock periods between negedge of SDA and negedge of SCL for start mark
         i2c->dev->scl_start_hold.time = fullPeriod_in_APB_clocks/4;
         //APB Clock periods between the posedge of SCL and the negedge of SDA for restart mark
         i2c->dev->scl_rstart_setup.time = fullPeriod_in_APB_clocks/4;
+
         //APB Clock periods after the STOP bit's posedge
         i2c->dev->scl_stop_hold.time = fullPeriod_in_APB_clocks/4;
         //APB Clock periods between the posedge of SCL and the posedge of SDA
         i2c->dev->scl_stop_setup.time = fullPeriod_in_APB_clocks/4;
+
         //APB Clock periods to hold the data after the negedge of SCL.
         i2c->dev->sda_hold.time = fullPeriod_in_APB_clocks/8;
         //APB Clock periods to sample data on SDA after the posedge of SCL
         i2c->dev->sda_sample.time = fullPeriod_in_APB_clocks/8;
+
+        //The max clock number of receiving  a data
+        i2c->dev->timeout.tout = 200000;//clocks max=1048575
 
         error_type = I2C_ERROR_OK;
     }
