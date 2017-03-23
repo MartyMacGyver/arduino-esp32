@@ -367,10 +367,12 @@ i2c_err_t i2cSetFrequency(i2c_t * i2c, uint32_t clk_speed)
 
         //tHIGH - APB Clock periods for SCL high (<16384)
         i2c->dev->scl_high_period.period =
-            scl_high_period_in_ps / APB_period_in_ps;
+            clk_period_in_ps / 2 / APB_period_in_ps - 1 - 8;
+            //scl_high_period_in_ps / APB_period_in_ps;
         //tLOW - APB Clock periods for SCL low (<16384)
         i2c->dev->scl_low_period.period =
-            scl_low_period_in_ps / APB_period_in_ps;
+            clk_period_in_ps / 2 / APB_period_in_ps - 1 - 8;
+            //scl_low_period_in_ps / APB_period_in_ps;
         //tHD;STA - APB Clock periods between negedge of SDA and
         //          the negedge of SCL for start mark (<1024)
         i2c->dev->scl_start_hold.time = (4000000) / APB_period_in_ps; // 4.0us
@@ -414,10 +416,12 @@ i2c_err_t i2cSetFrequency(i2c_t * i2c, uint32_t clk_speed)
 
         //tHIGH - APB Clock periods for SCL high (<16384)
         i2c->dev->scl_high_period.period =
-            scl_high_period_in_ps / APB_period_in_ps;
+            clk_period_in_ps / 2 / APB_period_in_ps - 1 - 8;
+            //scl_high_period_in_ps / APB_period_in_ps;
         //tLOW - APB Clock periods for SCL low (<16384)
         i2c->dev->scl_low_period.period =
-            scl_low_period_in_ps / APB_period_in_ps;
+            clk_period_in_ps / 2 / APB_period_in_ps - 1 - 8;
+            //scl_low_period_in_ps / APB_period_in_ps;
         //tHD;STA - APB Clock periods between negedge of SDA and
         //          the negedge of SCL for start mark (<1024)
         i2c->dev->scl_start_hold.time = (600000) / APB_period_in_ps; // 0.6us
@@ -461,10 +465,12 @@ i2c_err_t i2cSetFrequency(i2c_t * i2c, uint32_t clk_speed)
 
         //tHIGH - APB Clock periods for SCL high (<16384)
         i2c->dev->scl_high_period.period =
-            scl_high_period_in_ps / APB_period_in_ps;
+            clk_period_in_ps / 2 / APB_period_in_ps - 1 - 8;
+            //scl_high_period_in_ps / APB_period_in_ps;
         //tLOW - APB Clock periods for SCL low (<16384)
         i2c->dev->scl_low_period.period =
-            scl_low_period_in_ps / APB_period_in_ps;
+            clk_period_in_ps / 2 / APB_period_in_ps - 1 - 8;
+            //scl_low_period_in_ps / APB_period_in_ps;
         //tHD;STA - APB Clock periods between negedge of SDA and
         //          the negedge of SCL for start mark (<1024)
         i2c->dev->scl_start_hold.time = (260000) / APB_period_in_ps; // 0.26us
